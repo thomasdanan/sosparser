@@ -19,11 +19,24 @@ from MongoDataStore import MongoDataStore
 
 class SosTopo:
 
-    sosnodes = None
+
+    nodes = []
     datastore = []
 
     def __init__(self, sosarchive):
-        self.sosnodes = sosarchive +'/sos_commands/metalk8s/by-resources/node/'
+        sosnodes = sosarchive +'/sos_commands/metalk8s/by-resources/node/'
+        with open(sosnodes + "/list.txt", 'r') as file:
+            next(file)
+            for line in file:
+                self.nodes.append(line)
+
+        #files = os.listdir(self.sosnodes)
+        #for file in files:
+    #        if (re.search("(.*)eval_db.getCollection___infost", file)):
+    #                self.datastore.append(sosarchive +'/sos_commands/artesca/' + str(file))
+
 
     def extractTopo(self):
         print("=======================  TOPO  =======================")
+        for node in self.nodes:
+            print(node)
