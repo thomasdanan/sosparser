@@ -1,8 +1,6 @@
 from enum import Enum
 import sys, getopt, argparse, json, datetime, re
 
-#            date = datetime.datetime.fromtimestamp(value[0], tz=datetime.timezone.utc)
-
 class AGGR(Enum):
     MAX=1
     MIN=2
@@ -14,40 +12,38 @@ objects = None
 previous_usage = None
 current_usage = None
 measuredOn = None
+buckets = None
+
 
 class MongoDataStore:
 
     def __init__(self, mongodbDataStoreFiles):
         for mongodbDataStoreFile in mongodbDataStoreFiles:
             with open(mongodbDataStoreFile, 'r') as file:
+                braket = 0
+                jsonStr = ""
                 for line in file:
-                    if(re.search("(.*)objects: (.*),", line)):
-                        self.extractObjects(line)
-                    if(re.search("(.*)buckets: (.*),", line)):
-                        self.extractBuckets(line)
-                    if(re.search("(.*)total: { curr:(.*),", line)):
-                        self.extractCurrentCapa(line)
-                        self.extractPreviousCapa(line)
-                    if(re.search("(.*)measuredOn:(.*),", line)):
-                        self.extractMeasuredOn(line)
+                    if (re.search("(.*)measuredOn(.*)", line)):
+                        self.measuredOn = line.split("\"")[3]
+                        braket = 0
+                        jsonStr = ""
+                        break;
+                    jsonStr = jsonStr + line.strip()
+                    if (re.search("(.*){(.*)", line)):
+                        braket+=1
+                    elif (re.search("(.*)}(.*)", line)):
+                        braket-=1
+                    if braket == 0:
+                        try:
+                            dsStats = json.loads(jsonStr)
+                            self.parseJson(dsStats)
+                        except:
+                            break
+                        finally:
+                            jsonStr = ""
 
-
-    def extractObjects(self, line):
-        objects = line.split(":")[1]
-        self.objects = objects.split(",")[0]
-
-    def extractBuckets(self, line):
-        buckets = line.split(":")[1]
-        self.buckets = buckets.split(",")[0]
-
-    def extractCurrentCapa(self, line):
-        current = line.split(":")[2]
-        self.current_usage = float(current.split(",")[0])
-
-    def extractPreviousCapa(self, line):
-        previous = line.split(":")[3]
-        self.previous_usage = float(previous.split("}")[0])
-
-    def extractMeasuredOn(self, line):
-        date = line.split(":")[1]
-        self.measuredOn = date.split(",")[0]
+    def parseJson(self, dsStats):
+        self.objects = dsStats["value"]["objects"]
+        self.buckets = dsStats["value"]["buckets"]
+        self.previous_usage = dsStats["value"]["dataManaged"]["total"]["prev"]
+        self.current_usage = dsStats["value"]["dataManaged"]["total"]["curr"]

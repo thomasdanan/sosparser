@@ -1,5 +1,6 @@
 #!python
 import sys, getopt, argparse, json
+from path import Path
 from SosUsage import SosUsage
 from enum import Enum
 
@@ -16,7 +17,14 @@ parser.add_argument("stat", type=str, choices=[i.name for i in STAT], help="stat
 
 args = parser.parse_args()
 stat=STAT[args.stat]
-sosarchive=args.sosarchive
+
+
+if Path(args.sosarchive).is_dir():
+    sosarchive=args.sosarchive
+else:
+    print(args.sosarchive + " does not exist")
+    exit(1)
+
 
 if stat == STAT.USAGE:
     parser = SosUsage(sosarchive)
