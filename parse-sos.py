@@ -13,6 +13,11 @@ class STAT(Enum):
     USAGE=3
     ALERTS=4
 
+def getARTESCAVersion(sosarchive):
+    with open(sosarchive+"/sos_commands/metalk8s/by-namespaces/artesca-ui/deployment/artesca-ui_get.json", 'r') as file:
+        ui = json.load(file)
+        return ui["metadata"]["annotations"]["artesca.scality.com/version"]
+
 parser = argparse.ArgumentParser(description="Parse ARTESCA sosreport",
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
@@ -30,6 +35,7 @@ else:
     print(args.sosarchive + " does not exist")
     exit(1)
 
+print("############### ARTESCA VERSION: "+getARTESCAVersion(sosarchive) + " ###############")
 
 if stat == STAT.USAGE:
     parser = SosUsage(sosarchive)

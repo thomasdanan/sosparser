@@ -68,11 +68,11 @@ class SosUsage:
         print("xcore data capa = " + '{:.1f}'.format(xcore_data_capa/1024/1024/1024/1024) + " TiB")
         print("xcore data usage = " + '{:.1f}%'.format(xcore_data_used/xcore_data_capa*100))
 
-        print("xcore objects  = " + str(xcore_objects))
+        print("xcore objects  = " + '{:.0f}'.format(xcore_objects))
         print("xcore protected = " + '{:.1f}'.format(xcore_protected/1024/1024/1024/1024) + " TiB")
         print("xcore reclaimable = " + '{:.1f}'.format(xcore_reclaimable/1024/1024/1024/1024) + " TiB")
 
-        print("countitem objects  = " + str(mongo_data_store.objects))
+        print("countitem objects  = " + '{:.0f}'.format(mongo_data_store.objects))
         print("countitem used current = " + '{:.1f}'.format(mongo_data_store.current_usage/1024/1024/1024/1024) + " TiB")
         print("countitem used previous = " + '{:.1f}'.format(mongo_data_store.previous_usage/1024/1024) + " MiB")
         print("countitem date = " + mongo_data_store.measuredOn)
