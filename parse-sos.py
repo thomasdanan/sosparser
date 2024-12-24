@@ -2,17 +2,22 @@
 import sys, getopt, argparse, json
 from path import Path
 from SosUsage import SosUsage
+from SosTopo import SosTopo
+from SosAlerts import SosAlerts
 from enum import Enum
 
 
 class STAT(Enum):
-    USAGE=1
+    ALL=1
+    TOPO=2
+    USAGE=3
+    ALERTS=4
 
 parser = argparse.ArgumentParser(description="Parse ARTESCA sosreport",
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 parser.add_argument("sosarchive", type=str, help="sosreport archive folder")
-parser.add_argument("stat", type=str, choices=[i.name for i in STAT], help="stat to extract")
+parser.add_argument("-s", "--stat", type=str, choices=[i.name for i in STAT], default=STAT.ALL.name, help="stat to extract")
 
 
 args = parser.parse_args()
@@ -29,5 +34,18 @@ else:
 if stat == STAT.USAGE:
     parser = SosUsage(sosarchive)
     parser.extractUsage()
+elif stat == STAT.TOPO:
+    parser = SosTopo(sosarchive)
+    parser.extractTopo()
+elif stat == STAT.ALERTS:
+    parser = SosAlerts(sosarchive)
+    parser.extractAlerts()
+elif stat == STAT.ALL:
+    parser = SosUsage(sosarchive)
+    parser.extractUsage()
+    parser = SosTopo(sosarchive)
+    parser.extractTopo()
+    parser = SosAlerts(sosarchive)
+    parser.extractAlerts()
 else:
-    raise Exception('Unknown command :' + stat)
+    raise Exception('Unsupported stats :' + stat)

@@ -55,7 +55,7 @@ class SosUsage:
 
         mongo_data_store = MongoDataStore(self.datastore)
 
-
+        print("=======================  USAGE  =======================")
         print("mongodb used = " + '{:.1f}'.format(mongodb_used/1024/1024/1024) + " GiB")
         print("mongodb capa = " + '{:.1f}'.format(mongodb_capa/1024/1024/1024) + " GiB")
         print("mongodb usage = " + '{:.1f}%'.format(mongodb_used/mongodb_capa*100))
@@ -78,7 +78,7 @@ class SosUsage:
         print("countitem date = " + mongo_data_store.measuredOn)
 
         print("orphans = " + '{:.1f}'.format((xcore_protected - mongo_data_store.current_usage - mongo_data_store.previous_usage)/1024/1024/1024/1024) + "TiB")
-        print("overhead = " + '{:.3f}'.format(xcore_data_used/xcore_protected))
+        print("overhead = " + '{:.3f}'.format((xcore_data_used - xcore_reclaimable)/xcore_protected))
 
-
-        print("avg obj size = "+ '{:.1f}'.format(xcore_protected/xcore_objects/1024) + " KiB")
+        print("xcore avg obj size = "+ '{:.1f}'.format(xcore_protected/xcore_objects/1024) + " KiB")
+        print("countitem avg obj size = "+ '{:.1f}'.format((mongo_data_store.current_usage+mongo_data_store.previous_usage)/mongo_data_store.objects/1024) + " KiB")
