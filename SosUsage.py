@@ -2,6 +2,9 @@ from enum import Enum
 
 import os, re
 
+from path import Path
+
+
 from PromStat import PromStat, AGGR
 from MongoDataStore import MongoDataStore
 
@@ -21,10 +24,13 @@ class SosUsage:
 
     def __init__(self, sosarchive):
         self.sosmetrics = sosarchive +'/sos_commands/metalk8s/metrics/'
-        files = os.listdir(sosarchive +'/sos_commands/artesca')
-        for file in files:
-            if (re.search("(.*)eval_db.getCollection___infost", file)):
-                self.datastore.append(sosarchive +'/sos_commands/artesca/' + str(file))
+        if Path(sosarchive +'/sos_commands/artesca').is_dir():
+            files = os.listdir(sosarchive +'/sos_commands/artesca')
+            for file in files:
+                if (re.search("(.*)eval_db.getCollection___infost", file)):
+                    self.datastore.append(sosarchive +'/sos_commands/artesca/' + str(file))
+        else:
+            print("No mongodb output found")
 
     def extractUsage(self):
         available = PromStat(self.sosmetrics+'/kubelet_volume_stats_available_bytes.json')

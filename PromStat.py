@@ -1,4 +1,5 @@
 from enum import Enum
+from path import Path
 import sys, getopt, argparse, json, datetime, re
 
 #            date = datetime.datetime.fromtimestamp(value[0], tz=datetime.timezone.utc)
@@ -10,28 +11,38 @@ class AGGR(Enum):
     LAST=4
     SUM=5
 
-promStats = None
 
 class PromStat:
 
+    promStats = None
+
     def __init__(self, metricFile):
-        with open(metricFile, 'r') as file:
-            self.promStats = json.load(file)
+        if(Path(metricFile).is_file()):
+            with open(metricFile, 'r') as file:
+                self.promStats = json.load(file)
+        else:
+            print("No metric file found: " + metricFile)
 
     def extractFilteredMetric(self, filterKey, filterValue, timeAggrOp, instanceAggrOp):
-        metricValues = []
-        for metric in self.promStats["data"]["result"]:
-            if(re.search(filterValue, metric["metric"][filterKey])):
-                metricValues.append(self.aggregate(self.promValuesToNumArray(metric["values"]), timeAggrOp))
-        metricValue = self.aggregate(metricValues, instanceAggrOp)
-        return float(metricValue)
+        if self.promStats is not None:
+            metricValues = []
+            for metric in self.promStats["data"]["result"]:
+                if(re.search(filterValue, metric["metric"][filterKey])):
+                    metricValues.append(self.aggregate(self.promValuesToNumArray(metric["values"]), timeAggrOp))
+            metricValue = self.aggregate(metricValues, instanceAggrOp)
+            return float(metricValue)
+        else:
+            return float('nan')
 
     def extractMetric(self, timeAggrOp, instanceAggrOp):
-        metricValues = []
-        for metric in self.promStats["data"]["result"]:
-            metricValues.append(self.aggregate(self.promValuesToNumArray(metric["values"]), timeAggrOp))
-        metricValue= self.aggregate(metricValues, instanceAggrOp)
-        return float(metricValue)
+        if self.promStats is not None:
+            metricValues = []
+            for metric in self.promStats["data"]["result"]:
+                metricValues.append(self.aggregate(self.promValuesToNumArray(metric["values"]), timeAggrOp))
+            metricValue= self.aggregate(metricValues, instanceAggrOp)
+            return float(metricValue)
+        else:
+            return float('nan')
 
     def aggregate(self, numValues, aggrOp):
         metricValue = None
@@ -51,7 +62,7 @@ class PromStat:
     def getMax(self, values):
         metricValue = None
         for value in values:
-            if metricValue == None:
+            if metricValue is None:
                 metricValue = value
             else:
                 metricValue = max(metricValue, value)
@@ -60,7 +71,7 @@ class PromStat:
     def getMin(self, values):
         metricValue = None
         for value in values:
-            if metricValue == None:
+            if metricValue is None:
                 metricValue = value
             else:
                 metricValue = min(metricValue, value)

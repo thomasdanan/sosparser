@@ -8,42 +8,46 @@ class AGGR(Enum):
     LAST=4
     SUM=5
 
-objects = None
-previous_usage = None
-current_usage = None
-measuredOn = None
-buckets = None
-
-
 class MongoDataStore:
+
+    objects = float('nan')
+    previous_usage = float('nan')
+    current_usage = float('nan')
+    measuredOn = "NaN"
+    buckets = float('nan')
 
     def __init__(self, mongodbDataStoreFiles):
         for mongodbDataStoreFile in mongodbDataStoreFiles:
             with open(mongodbDataStoreFile, 'r') as file:
-                braket = 0
-                jsonStr = ""
-                for line in file:
-                    if (re.search("(.*)measuredOn(.*)", line)):
-                        self.measuredOn = line.split("\"")[3]
-                        braket = 0
-                        jsonStr = ""
-                        break;
-                    jsonStr = jsonStr + line.strip()
-                    if (re.search("(.*){(.*)", line)):
-                        braket+=1
-                    elif (re.search("(.*)}(.*)", line)):
-                        braket-=1
-                    if braket == 0:
-                        try:
-                            dsStats = json.loads(jsonStr)
-                            self.parseJson(dsStats)
-                        except:
-                            break
-                        finally:
-                            jsonStr = ""
+                try:
+                    notjson = file.read()
+                    jsonStr = re.sub(r'([_]*[a-zA-Z]+):', r'"\1":', notjson)
+                    jsonStr = jsonStr.replace("\'", "\"")
+                    jsonStr = re.sub(r'( Long\(\"[0-9]+\"\))', "\"NaN\"", jsonStr)
+                    jsonStr = re.sub(r'( NumberLong\([0-9]+\))', "\"NaN\"", jsonStr)
+                    jsonStr = re.sub(r'( NumberLong\(\"[0-9]+\"\))', "\"NaN\"", jsonStr)
+                    if (re.search(r"\}\n\{", jsonStr)):
+                        jsonStr = re.sub(r"\}\n\{", "},{", jsonStr)
+                        jsonStr = f"[{jsonStr}]"
+                    dsStats = json.loads(jsonStr)
+                    self.parseJsonArray(dsStats)
+                except:
+                    continue
 
-    def parseJson(self, dsStats):
-        self.objects = dsStats["value"]["objects"]
-        self.buckets = dsStats["value"]["buckets"]
-        self.previous_usage = dsStats["value"]["dataManaged"]["total"]["prev"]
-        self.current_usage = dsStats["value"]["dataManaged"]["total"]["curr"]
+    def parseJsonArray(self, dsStats):
+        for dsStat in dsStats:
+            try:
+                self.parseJson(dsStat)
+            except:
+                self.parseMeasuredOn(dsStat)
+            finally:
+                continue
+
+    def parseMeasuredOn(self, dsStat):
+        self.measuredOn = dsStat["measuredOn"]
+
+    def parseJson(self, dsStat):
+        self.objects = dsStat["value"]["objects"]
+        self.buckets = dsStat["value"]["buckets"]
+        self.previous_usage = dsStat["value"]["dataManaged"]["total"]["prev"]
+        self.current_usage = dsStat["value"]["dataManaged"]["total"]["curr"]
