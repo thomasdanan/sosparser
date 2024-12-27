@@ -32,6 +32,24 @@ class SosUsage:
         else:
             print("No mongodb output found")
 
+    def extractVolumesAlmostFull(self, available, capacity, filterValue):
+        volumes = available.getInstances( "persistentvolumeclaim", filterValue)
+        almostFullVolumes = dict()
+        for volume in volumes:
+            avail = available.extractFilteredMetric("persistentvolumeclaim", volume, AGGR.MAX, AGGR.MAX)
+            capa = capacity.extractFilteredMetric("persistentvolumeclaim", volume, AGGR.MAX, AGGR.MAX)
+            usagePercent = (capa-avail)/capa
+            if usagePercent > 0.80:
+                almostFullVolumes[volume] = '{:.1f}%'.format(usagePercent*100)
+        return almostFullVolumes
+
+    def extractDataDiskVolumesAlmostFull(self, available, capacity):
+        return self.extractVolumesAlmostFull(available, capacity, "^(artesca-storage-service-.*-data.*)")
+
+    def extractServiceDiskVolumesAlmostFull(self, available, capacity):
+        return self.extractVolumesAlmostFull(available, capacity, "^(?!artesca-storage-service-.*-data.*)")
+
+
     def extractUsage(self):
         available = PromStat(self.sosmetrics+'/kubelet_volume_stats_available_bytes.json')
         capacity = PromStat(self.sosmetrics+'/kubelet_volume_stats_capacity_bytes.json')
@@ -82,3 +100,11 @@ class SosUsage:
 
         print("xcore avg obj size = "+ '{:.1f}'.format(xcore_protected/xcore_objects/1024) + " KiB")
         print("countitem avg obj size = "+ '{:.1f}'.format((mongo_data_store.current_usage+mongo_data_store.previous_usage)/mongo_data_store.objects/1024) + " KiB")
+
+        serviceDiskVolumesAlmostFull = self.extractServiceDiskVolumesAlmostFull(available, capacity)
+        print(str(len(serviceDiskVolumesAlmostFull)) + " service disk volumes higher than 80%: ")
+        for volume in serviceDiskVolumesAlmostFull:
+            print(volume + ": "+ serviceDiskVolumesAlmostFull[volume])
+
+        dataDiskVolumesAlmostFull = self.extractDataDiskVolumesAlmostFull(available, capacity)
+        print(str(len(dataDiskVolumesAlmostFull)) + " data disk volumes higher than 80%: ")

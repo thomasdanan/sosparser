@@ -29,7 +29,6 @@ class SosTopo:
             next(file)
             for line in file:
                 self.nodes.append(line)
-
         #files = os.listdir(self.sosnodes)
         #for file in files:
     #        if (re.search("(.*)eval_db.getCollection___infost", file)):
@@ -38,5 +37,16 @@ class SosTopo:
 
     def extractTopo(self):
         print("=======================  TOPO  =======================")
+        self.extractNodeTopo()
+        #self.extractMongoTopo()
+
+    def extractNodeTopo(self):
         for node in self.nodes:
             print(node)
+
+    #def extractMongoTopo(self):
+    #    sosmongos= sosarchive +'/sos_commands/artecsa/'
+    #    files = os.listdir(sosmongos)
+    #    for mongostatuses in files:
+    #        with open(mongostatuses, 'r') as file:
+    #            jsonMongoStatuses = json.load(file)

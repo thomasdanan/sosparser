@@ -1,5 +1,6 @@
 from enum import Enum
 from path import Path
+from FromJson import FromJson
 import sys, getopt, argparse, json, datetime, re
 
 #            date = datetime.datetime.fromtimestamp(value[0], tz=datetime.timezone.utc)
@@ -12,21 +13,23 @@ class AGGR(Enum):
     SUM=5
 
 
-class PromStat:
-
-    promStats = None
+class PromStat(FromJson):
 
     def __init__(self, metricFile):
-        if(Path(metricFile).is_file()):
-            with open(metricFile, 'r') as file:
-                self.promStats = json.load(file)
-        else:
-            print("No metric file found: " + metricFile)
+        FromJson.__init__(self, metricFile)
+
+    def getInstances(self, filterKey, filterValue):
+        metricInstances = []
+        if self.fromJson is not None:
+            for metric in self.fromJson["data"]["result"]:
+                if(re.search(filterValue, metric["metric"][filterKey])):
+                    metricInstances.append(metric["metric"][filterKey])
+        return metricInstances
 
     def extractFilteredMetric(self, filterKey, filterValue, timeAggrOp, instanceAggrOp):
-        if self.promStats is not None:
+        if self.fromJson is not None:
             metricValues = []
-            for metric in self.promStats["data"]["result"]:
+            for metric in self.fromJson["data"]["result"]:
                 if(re.search(filterValue, metric["metric"][filterKey])):
                     metricValues.append(self.aggregate(self.promValuesToNumArray(metric["values"]), timeAggrOp))
             metricValue = self.aggregate(metricValues, instanceAggrOp)
@@ -35,9 +38,9 @@ class PromStat:
             return float('nan')
 
     def extractMetric(self, timeAggrOp, instanceAggrOp):
-        if self.promStats is not None:
+        if self.fromJson is not None:
             metricValues = []
-            for metric in self.promStats["data"]["result"]:
+            for metric in self.fromJson["data"]["result"]:
                 metricValues.append(self.aggregate(self.promValuesToNumArray(metric["values"]), timeAggrOp))
             metricValue= self.aggregate(metricValues, instanceAggrOp)
             return float(metricValue)
