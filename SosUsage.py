@@ -36,8 +36,8 @@ class SosUsage:
         volumes = available.getInstances( "persistentvolumeclaim", filterValue)
         almostFullVolumes = dict()
         for volume in volumes:
-            avail = available.extractFilteredMetric("persistentvolumeclaim", volume, AGGR.MAX, AGGR.MAX)
-            capa = capacity.extractFilteredMetric("persistentvolumeclaim", volume, AGGR.MAX, AGGR.MAX)
+            avail = available.extractMetricFilteredOnKey("persistentvolumeclaim", volume, AGGR.MAX, AGGR.MAX)
+            capa = capacity.extractMetricFilteredOnKey("persistentvolumeclaim", volume, AGGR.MAX, AGGR.MAX)
             usagePercent = (capa-avail)/capa
             if usagePercent > 0.80:
                 almostFullVolumes[volume] = '{:.1f}%'.format(usagePercent*100)
@@ -57,33 +57,33 @@ class SosUsage:
         xcore_bytes_net = PromStat(self.sosmetrics+'/hyperdrive_http_bytes_net.json')
         xcore_reclaimable = PromStat(self.sosmetrics+'/hyperdrive_http_bytes_reclaimable_free_space.json')
 
-        mongodb_capa = capacity.extractFilteredMetric("persistentvolumeclaim", 'datadir-data-db-mongodb-sharded-shard[0-9]-data-[0-9]', AGGR.MAX, AGGR.MAX)
-        mongodb_used = mongodb_capa - available.extractFilteredMetric("persistentvolumeclaim", 'datadir-data-db-mongodb-sharded-shard[0-9]-data-[0-9]', AGGR.MAX, AGGR.MAX)
+        mongodb_capa = capacity.extractMetricFilteredOnKey("persistentvolumeclaim", 'datadir-data-db-mongodb-sharded-shard[0-9]-data-[0-9]', AGGR.MAX, AGGR.MAX)
+        mongodb_used = mongodb_capa - available.extractMetricFilteredOnKey("persistentvolumeclaim", 'datadir-data-db-mongodb-sharded-shard[0-9]-data-[0-9]', AGGR.MAX, AGGR.MIN)
 
-        xcore_index_capa = capacity.extractFilteredMetric("persistentvolumeclaim", 'artesca-storage-service-(.*)-index', AGGR.MAX, AGGR.MAX)
-        xcore_index_used = xcore_index_capa - available.extractFilteredMetric("persistentvolumeclaim", 'artesca-storage-service-(.*)-index', AGGR.MAX, AGGR.MAX)
+        xcore_index_capa = capacity.extractMetricFilteredOnKey("persistentvolumeclaim", 'artesca-storage-service-(.*)-index', AGGR.MAX, AGGR.MAX)
+        xcore_index_used = xcore_index_capa - available.extractMetricFilteredOnKey("persistentvolumeclaim", 'artesca-storage-service-(.*)-index', AGGR.MAX, AGGR.MIN)
 
-        xcore_data_capa = capacity.extractFilteredMetric("persistentvolumeclaim", 'artesca-storage-service-(.*)-data(.*)', AGGR.MAX, AGGR.SUM)
-        xcore_data_used = xcore_data_capa - available.extractFilteredMetric("persistentvolumeclaim", 'artesca-storage-service-(.*)-data(.*)', AGGR.MAX, AGGR.SUM)
+        xcore_data_capa = capacity.extractMetricFilteredOnKey("persistentvolumeclaim", 'artesca-storage-service-(.*)-data(.*)', AGGR.MAX, AGGR.SUM)
+        xcore_data_used = xcore_data_capa - available.extractMetricFilteredOnKey("persistentvolumeclaim", 'artesca-storage-service-(.*)-data(.*)', AGGR.MAX, AGGR.SUM)
 
 
-        xcore_objects = xcore_objects_net.extractMetric(AGGR.MAX, AGGR.SUM)
-        xcore_protected = xcore_bytes_net.extractMetric(AGGR.MAX, AGGR.SUM)
-        xcore_reclaimable = xcore_reclaimable.extractMetric(AGGR.MAX, AGGR.MAX)
+        xcore_objects = xcore_objects_net.extractMetricGroupedByKey(AGGR.MAX, AGGR.SUM, "xcore_scality_com_node_name")
+        xcore_protected = xcore_bytes_net.extractMetricGroupedByKey(AGGR.MAX, AGGR.SUM, "xcore_scality_com_node_name")
+        xcore_reclaimable = xcore_reclaimable.extractMetricGroupedByKey(AGGR.MAX, AGGR.SUM, "xcore_scality_com_node_name")
 
         mongo_data_store = MongoDataStore(self.datastore)
 
         print("=======================  USAGE  =======================")
-        print("mongodb used = " + '{:.1f}'.format(mongodb_used/1024/1024/1024) + " GiB")
         print("mongodb capa = " + '{:.1f}'.format(mongodb_capa/1024/1024/1024) + " GiB")
-        print("mongodb usage = " + '{:.1f}%'.format(mongodb_used/mongodb_capa*100))
+        print("max mongodb used = " + '{:.1f}'.format(mongodb_used/1024/1024/1024) + " GiB")
+        print("max mongodb usage = " + '{:.1f}%'.format(mongodb_used/mongodb_capa*100))
 
-        print("xcore index used = " + '{:.1f}'.format(xcore_index_used/1024/1024/1024) + " GiB")
         print("xcore index capa = " + '{:.1f}'.format(xcore_index_capa/1024/1024/1024) + " GiB")
-        print("xcore index usage = " + '{:.1f}%'.format(xcore_index_used/xcore_index_capa*100))
+        print("max xcore index used = " + '{:.1f}'.format(xcore_index_used/1024/1024/1024) + " GiB")
+        print("max xcore index usage = " + '{:.1f}%'.format(xcore_index_used/xcore_index_capa*100))
 
-        print("xcore data used = " + '{:.1f}'.format(xcore_data_used/1024/1024/1024/1024) + " TiB")
         print("xcore data capa = " + '{:.1f}'.format(xcore_data_capa/1024/1024/1024/1024) + " TiB")
+        print("xcore data used = " + '{:.1f}'.format(xcore_data_used/1024/1024/1024/1024) + " TiB")
         print("xcore data usage = " + '{:.1f}%'.format(xcore_data_used/xcore_data_capa*100))
 
         print("xcore objects  = " + '{:.0f}'.format(xcore_objects))

@@ -29,9 +29,11 @@ class MongoDataStore:
                     if (re.search(r"\}\n\{", jsonStr)):
                         jsonStr = re.sub(r"\}\n\{", "},{", jsonStr)
                         jsonStr = f"[{jsonStr}]"
+                    jsonStr = jsonStr.replace("Type \"it\" for more","")
                     dsStats = json.loads(jsonStr)
                     self.parseJsonArray(dsStats)
-                except:
+                except Exception as e:
+#                    print(e)
                     continue
 
     def parseJsonArray(self, dsStats):

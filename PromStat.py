@@ -26,7 +26,7 @@ class PromStat(FromJson):
                     metricInstances.append(metric["metric"][filterKey])
         return metricInstances
 
-    def extractFilteredMetric(self, filterKey, filterValue, timeAggrOp, instanceAggrOp):
+    def extractMetricFilteredOnKey(self, filterKey, filterValue, timeAggrOp, instanceAggrOp):
         if self.fromJson is not None:
             metricValues = []
             for metric in self.fromJson["data"]["result"]:
@@ -37,12 +37,35 @@ class PromStat(FromJson):
         else:
             return float('nan')
 
-    def extractMetric(self, timeAggrOp, instanceAggrOp):
+    def extractMetricFilteredOnKey(self, filterKey, filterValue, timeAggrOp, instanceAggrOp):
         if self.fromJson is not None:
-            metricValues = []
+            metricValues = dict()
             for metric in self.fromJson["data"]["result"]:
-                metricValues.append(self.aggregate(self.promValuesToNumArray(metric["values"]), timeAggrOp))
-            metricValue= self.aggregate(metricValues, instanceAggrOp)
+                if(re.search(filterValue, metric["metric"][filterKey])):
+                    groupByValue = metric["metric"][filterKey]
+                    value = self.aggregate(self.promValuesToNumArray(metric["values"]), timeAggrOp)
+                    if groupByValue not in metricValues.keys() or value > metricValues[groupByValue]:
+                        metricValues[groupByValue] = self.aggregate(self.promValuesToNumArray(metric["values"]), timeAggrOp)
+            metricValuesArray = []
+            for metricValue in metricValues:
+                metricValuesArray.append(metricValues[metricValue])
+            metricValue = self.aggregate(metricValuesArray, instanceAggrOp)
+            return float(metricValue)
+        else:
+            return float('nan')
+
+    def extractMetricGroupedByKey(self, timeAggrOp, instanceAggrOp, groupByKey):
+        if self.fromJson is not None:
+            metricValues = dict()
+            for metric in self.fromJson["data"]["result"]:
+                groupByValue = metric["metric"][groupByKey]
+                value = self.aggregate(self.promValuesToNumArray(metric["values"]), timeAggrOp)
+                if groupByValue not in metricValues.keys() or value > metricValues[groupByValue]:
+                    metricValues[groupByValue] = self.aggregate(self.promValuesToNumArray(metric["values"]), timeAggrOp)
+            metricValuesArray = []
+            for metricValue in metricValues:
+                metricValuesArray.append(metricValues[metricValue])
+            metricValue = self.aggregate(metricValuesArray, instanceAggrOp)
             return float(metricValue)
         else:
             return float('nan')
