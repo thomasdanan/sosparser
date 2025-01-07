@@ -5,6 +5,7 @@ from SosUsage import SosUsage
 from SosTopo import SosTopo
 from SosAlerts import SosAlerts
 from enum import Enum
+from ListPods import SosPods
 
 
 class STAT(Enum):
@@ -12,6 +13,7 @@ class STAT(Enum):
     TOPO=2
     USAGE=3
     ALERTS=4
+    PODS = 5
 
 def getARTESCAVersion(sosarchive):
     with open(sosarchive+"/sos_commands/metalk8s/by-namespaces/artesca-ui/deployment/artesca-ui_get.json", 'r') as file:
@@ -46,6 +48,9 @@ elif stat == STAT.TOPO:
 elif stat == STAT.ALERTS:
     parser = SosAlerts(sosarchive)
     parser.extractAlerts()
+elif stat == STAT.PODS:
+    parser = SosPods(sosarchive)
+    parser.list_pods()
 elif stat == STAT.ALL:
     parser = SosUsage(sosarchive)
     parser.extractUsage()
@@ -53,5 +58,8 @@ elif stat == STAT.ALL:
     parser.extractTopo()
     parser = SosAlerts(sosarchive)
     parser.extractAlerts()
+    # Extract pods
+    parser = SosPods(sosarchive)
+    parser.list_pods()
 else:
     raise Exception('Unsupported stats :' + stat)
