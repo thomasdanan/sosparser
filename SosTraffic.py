@@ -39,11 +39,14 @@ class Stats():
         self.success += stat.success
         self.size += stat.size
 
+    def getLatency(self):
+        return self.elapsed/self.ops
+
 
     def getResult(self):
         return ("ops: "+str(self.ops)+", success: " + '{:.1f}%'.format(self.success/self.ops*100)
         + ", usrErr: "+ '{:.1f}%'.format(self.usrErr/self.ops*100)
-        + ", sysErr: "+ '{:.1f}%'.format(self.sysErr/self.ops*100)
+        + ", sysErr: "+ '{:.3f}%'.format(self.sysErr/self.ops*100)
         + ", avgObjSize: "+ '{:.1f}'.format(self.size/self.ops) + " bytes"
         + ", avgLatency: "+ '{:.1f}'.format(self.elapsed/self.ops) + " ms")
 
@@ -96,12 +99,14 @@ class SosTraffic:
             self.stats[key][action].addStat(jsonLog)
 
     def printResult(self):
-        print("=======================  TRAFFIC  =======================")
+        print("==============================  TRAFFIC  ===============================")
+        print("### Display stats per bucket when latency > 100ms or when sysErr > 0 ###")
         total = dict()
         for key in self.stats:
             print(key)
             for action in self.stats.get(key):
-                print("  "+ action + ": " + self.stats[key][action].getResult())
+                if( self.stats[key][action].getLatency() > 100 or self.stats[key][action].sysErr > 0):
+                  print("  "+ action + ": " + self.stats[key][action].getResult())
                 if(total.get(action) is None):
                     total[action] = Stats()
                 total[action].addUnitStat(self.stats[key][action])
