@@ -42,7 +42,7 @@ class Stats():
 class SosTraffic:
 
     cslogs = []
-    pattern = re.compile("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]+-[0-9]{2}:[0-9]{2} (.*)")
+    pattern = re.compile("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]+[+-]{1}[0-9]{2}:[0-9]{2} (.*)")
     stats = dict()
 
 
@@ -74,16 +74,17 @@ class SosTraffic:
         return jsonStr
 
     def addStat(self, jsonLog):
-        accountName = jsonLog["accountName"]
-        bucketName = jsonLog["bucketName"]
-        action = jsonLog["action"]
-        key = accountName+"-"+bucketName
-        #print(accountName+"-"+bucketName+"-"+action+"-"+str(httpCode)+"-"+str(bytesReceived))
-        if(self.stats.get(key) is None):
-            self.stats[key] = dict()
-        if(self.stats[key].get(action) is None):
-            self.stats[key][action] = Stats()
-        self.stats[key][action].addStat(jsonLog)
+        if("bucketName" in jsonLog and "accountName" in jsonLog):
+            accountName = jsonLog["accountName"]
+            bucketName = jsonLog["bucketName"]
+            action = jsonLog["action"]
+            key = accountName+"-"+bucketName
+            #print(accountName+"-"+bucketName+"-"+action+"-"+str(httpCode)+"-"+str(bytesReceived))
+            if(self.stats.get(key) is None):
+                self.stats[key] = dict()
+            if(self.stats[key].get(action) is None):
+                self.stats[key][action] = Stats()
+            self.stats[key][action].addStat(jsonLog)
 
     def printResult(self):
         print("=======================  TRAFFIC  =======================")
