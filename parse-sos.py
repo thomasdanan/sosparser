@@ -6,6 +6,7 @@ from SosTopo import SosTopo
 from SosAlerts import SosAlerts
 from SosTraffic import SosTraffic
 from enum import Enum
+from ListPods import SosPods
 
 
 class STAT(Enum):
@@ -13,7 +14,8 @@ class STAT(Enum):
     TOPO=2
     USAGE=3
     ALERTS=4
-    TRAFFIC=5
+    PODS = 5
+    TRAFFIC=6
 
 def getARTESCAVersion(sosarchive):
     with open(sosarchive+"/sos_commands/metalk8s/by-namespaces/artesca-ui/deployment/artesca-ui_get.json", 'r') as file:
@@ -48,6 +50,9 @@ elif stat == STAT.TOPO:
 elif stat == STAT.ALERTS:
     parser = SosAlerts(sosarchive)
     parser.extractAlerts()
+elif stat == STAT.PODS:
+    parser = SosPods(sosarchive)
+    parser.list_pods()
 elif stat == STAT.TRAFFIC:
     parser = SosTraffic(sosarchive)
     parser.printResult()
@@ -58,6 +63,9 @@ elif stat == STAT.ALL:
     parser.extractTopo()
     parser = SosAlerts(sosarchive)
     parser.extractAlerts()
+    # Extract pods
+    parser = SosPods(sosarchive)
+    parser.list_pods()
     parser = SosTraffic(sosarchive)
     parser.printResult()
 else:
