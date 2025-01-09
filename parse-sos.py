@@ -4,6 +4,7 @@ from path import Path
 from SosUsage import SosUsage
 from SosTopo import SosTopo
 from SosAlerts import SosAlerts
+from SosTraffic import SosTraffic
 from enum import Enum
 
 
@@ -12,6 +13,7 @@ class STAT(Enum):
     TOPO=2
     USAGE=3
     ALERTS=4
+    TRAFFIC=5
 
 def getARTESCAVersion(sosarchive):
     with open(sosarchive+"/sos_commands/metalk8s/by-namespaces/artesca-ui/deployment/artesca-ui_get.json", 'r') as file:
@@ -46,6 +48,9 @@ elif stat == STAT.TOPO:
 elif stat == STAT.ALERTS:
     parser = SosAlerts(sosarchive)
     parser.extractAlerts()
+elif stat == STAT.TRAFFIC:
+    parser = SosTraffic(sosarchive)
+    parser.printResult()
 elif stat == STAT.ALL:
     parser = SosUsage(sosarchive)
     parser.extractUsage()
@@ -53,5 +58,7 @@ elif stat == STAT.ALL:
     parser.extractTopo()
     parser = SosAlerts(sosarchive)
     parser.extractAlerts()
+    parser = SosTraffic(sosarchive)
+    parser.printResult()
 else:
     raise Exception('Unsupported stats :' + stat)
