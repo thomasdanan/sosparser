@@ -31,6 +31,15 @@ class Stats():
         elif(httpCode >= 500):
             self.sysErr += 1
 
+    def addUnitStat(self, stat):
+        self.ops += stat.ops
+        self.elapsed += stat.elapsed
+        self.sysErr += stat.sysErr
+        self.usrErr += stat.usrErr
+        self.success += stat.success
+        self.size += stat.size
+
+
     def getResult(self):
         return ("ops: "+str(self.ops)+", success: " + '{:.1f}%'.format(self.success/self.ops*100)
         + ", usrErr: "+ '{:.1f}%'.format(self.usrErr/self.ops*100)
@@ -88,7 +97,14 @@ class SosTraffic:
 
     def printResult(self):
         print("=======================  TRAFFIC  =======================")
+        total = dict()
         for key in self.stats:
             print(key)
             for action in self.stats.get(key):
                 print("  "+ action + ": " + self.stats[key][action].getResult())
+                if(total.get(action) is None):
+                    total[action] = Stats()
+                total[action].addUnitStat(self.stats[key][action])
+        print("Total:")
+        for action in total:
+            print("  "+ action + ": " + total[action].getResult())
