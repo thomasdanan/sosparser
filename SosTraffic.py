@@ -9,13 +9,21 @@ class Stats():
     sysErr = 0
     usrErr = 0
     success = 0
+    size = 0
 
     def addStat(self, jsonLog):
         bytesReceived = jsonLog["bytesReceived"]
         httpCode = jsonLog["httpCode"]
         latency = jsonLog["elapsed_ms"]
+        if("contentLength" in jsonLog):
+            objSize = jsonLog["contentLength"]
+            self.size += objSize
+        elif("bodyLength" in jsonLog):
+            objSize = jsonLog["bodyLength"]
+            self.size += objSize
         self.ops += 1
         self.elapsed += latency
+
         if(httpCode < 300):
             self.success += 1
         elif(httpCode < 500):
@@ -27,6 +35,7 @@ class Stats():
         return ("ops: "+str(self.ops)+", success: " + '{:.1f}%'.format(self.success/self.ops*100)
         + ", usrErr: "+ '{:.1f}%'.format(self.usrErr/self.ops*100)
         + ", sysErr: "+ '{:.1f}%'.format(self.sysErr/self.ops*100)
+        + ", avgObjSize: "+ '{:.1f}'.format(self.size/self.ops) + " bytes"
         + ", avgLatency: "+ '{:.1f}'.format(self.elapsed/self.ops) + " ms")
 
 
