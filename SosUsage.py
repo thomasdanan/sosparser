@@ -96,9 +96,13 @@ class SosUsage:
         print("countitem date = " + mongo_data_store.measuredOn)
 
         print("orphans = " + '{:.1f}'.format((xcore_protected - mongo_data_store.current_usage - mongo_data_store.previous_usage)/1024/1024/1024/1024) + "TiB")
-        print("overhead = " + '{:.3f}'.format((xcore_data_used - xcore_reclaimable)/xcore_protected))
+        if(xcore_protected > 0):
+            print("overhead = " + '{:.3f}'.format((xcore_data_used - xcore_reclaimable)/xcore_protected))
+            print("xcore avg obj size = "+ '{:.1f}'.format(xcore_protected/xcore_objects/1024) + " KiB")
+        else:
+            print("overhead/xcore avg obj size = Can't compute as platform is empty")
 
-        print("xcore avg obj size = "+ '{:.1f}'.format(xcore_protected/xcore_objects/1024) + " KiB")
+
         print("countitem avg obj size = "+ '{:.1f}'.format((mongo_data_store.current_usage+mongo_data_store.previous_usage)/mongo_data_store.objects/1024) + " KiB")
 
         serviceDiskVolumesAlmostFull = self.extractServiceDiskVolumesAlmostFull(available, capacity)

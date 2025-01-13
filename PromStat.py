@@ -61,7 +61,7 @@ class PromStat(FromJson):
                 groupByValue = metric["metric"][groupByKey]
                 value = self.aggregate(self.promValuesToNumArray(metric["values"]), timeAggrOp)
                 if groupByValue not in metricValues.keys() or value > metricValues[groupByValue]:
-                    metricValues[groupByValue] = self.aggregate(self.promValuesToNumArray(metric["values"]), timeAggrOp)
+                    metricValues[groupByValue] = value
             metricValuesArray = []
             for metricValue in metricValues:
                 metricValuesArray.append(metricValues[metricValue])
@@ -69,6 +69,23 @@ class PromStat(FromJson):
             return float(metricValue)
         else:
             return float('nan')
+
+#    def extractMetricSlicedByKey(self, timeAggrOp, instanceAggrOp, groupByKey):
+#        if self.fromJson is not None:
+#            metricValues = dict()
+#            for metric in self.fromJson["data"]["result"]:
+#                groupByValue = metric["metric"][groupByKey]
+#                value = self.aggregate(self.promValuesToNumArray(metric["values"]), timeAggrOp)
+#                if groupByValue not in metricValues.keys():
+#                    metricValues[groupByValue] = []
+#                metricValues[groupByValue].append(value)
+#            metricValuesArray = []
+#            for metricValue in metricValues:
+#                metricValue[metricValue.key()] = self.aggregate(metricValue.value(), instanceAggrOp)
+#            metricValue = self.aggregate(metricValuesArray, instanceAggrOp)
+#            return float(metricValue)
+#        else:
+#            return float('nan')
 
     def aggregate(self, numValues, aggrOp):
         metricValue = None

@@ -2,7 +2,7 @@ import os, re, json
 
 from path import Path
 
-class Stats():
+class S3ActionStats():
 
     ops = 0
     elapsed = 0
@@ -11,7 +11,7 @@ class Stats():
     success = 0
     size = 0
 
-    def addStat(self, jsonLog):
+    def addStatFromJson(self, jsonLog):
         bytesReceived = jsonLog["bytesReceived"]
         httpCode = jsonLog["httpCode"]
         latency = jsonLog["elapsed_ms"]
@@ -31,7 +31,7 @@ class Stats():
         elif(httpCode >= 500):
             self.sysErr += 1
 
-    def addUnitStat(self, stat):
+    def addStatFromActionStat(self, stat):
         self.ops += stat.ops
         self.elapsed += stat.elapsed
         self.sysErr += stat.sysErr
@@ -56,9 +56,10 @@ class SosTraffic:
     cslogs = []
     pattern = re.compile("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]+[+-]{1}[0-9]{2}:[0-9]{2} (.*)")
     stats = dict()
-
+    sosarchive = None
 
     def __init__(self, sosarchive):
+        self.sosarchive = sosarchive
         csLogsdir = sosarchive +'/sos_commands/metalk8s/by-resources/pod/zenko/'
         if Path(csLogsdir).is_dir():
             files = os.listdir(csLogsdir)
@@ -67,25 +68,30 @@ class SosTraffic:
                     self.cslogs.append(csLogsdir + str(file))
         else:
             print("No cs log files found")
-        self.parseLogs()
+        self.parseCSLogs()
 
 
-    def parseLogs(self):
+#    def loadS3ServiceMetrics(self):
+#        ops = PromStat(self.sosmetrics+'/s3_cloudserver_http_requests_total.json')
+#        mongodb_capa = capacity.extractMetricFilteredOnKey("persistentvolumeclaim", 'datadir-data-db-mongodb-sharded-shard[0-9]-data-[0-9]', AGGR.MAX, AGGR.MAX)
+
+
+    def parseCSLogs(self):
         for logFile in self.cslogs:
             with open(logFile, 'r') as file:
                 lines = file.readlines()
                 for line in lines:
                     if (re.search(",\"message\":\"responded(.*)", line)):
-                        jsonStr = self.extractJsonContent(line)
+                        jsonStr = self.extractJsonContentFromCSLog(line)
                         jsonLog = json.loads(jsonStr)
-                        self.addStat(jsonLog)
+                        self.addS3OperationStat(jsonLog)
 
-    def extractJsonContent(self, line):
+    def extractJsonContentFromCSLog(self, line):
         result = self.pattern.search(line)
         jsonStr = result.group(1)
         return jsonStr
 
-    def addStat(self, jsonLog):
+    def addS3OperationStat(self, jsonLog):
         if("bucketName" in jsonLog and "accountName" in jsonLog):
             accountName = jsonLog["accountName"]
             bucketName = jsonLog["bucketName"]
@@ -95,8 +101,8 @@ class SosTraffic:
             if(self.stats.get(key) is None):
                 self.stats[key] = dict()
             if(self.stats[key].get(action) is None):
-                self.stats[key][action] = Stats()
-            self.stats[key][action].addStat(jsonLog)
+                self.stats[key][action] = S3ActionStats()
+            self.stats[key][action].addStatFromJson(jsonLog)
 
     def printResult(self):
         print("==============================  TRAFFIC  ===============================")
@@ -108,8 +114,8 @@ class SosTraffic:
                 if( self.stats[key][action].getLatency() > 100 or self.stats[key][action].sysErr > 0):
                   print("  "+ action + ": " + self.stats[key][action].getResult())
                 if(total.get(action) is None):
-                    total[action] = Stats()
-                total[action].addUnitStat(self.stats[key][action])
+                    total[action] = S3ActionStats()
+                total[action].addStatFromActionStat(self.stats[key][action])
         print("Total:")
         for action in total:
             print("  "+ action + ": " + total[action].getResult())
