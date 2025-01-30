@@ -3,11 +3,17 @@ Sosparser is a Python-based tool designed to parse and analyze ARTESCA sosreport
 It extracts detailed information such as usage statistics, topology configurations,
 active alerts, and pod details, providing insights into the health and performance of the environment.
 
+Here’s the formatted version with a new line for each command:
+
+```bash
 # Set up the environment:
 
-   python3 -m venv env
-   source env/bin/activate
-   pip install -r requirements.txt
+python3 -m venv env
+
+source env/bin/activate
+
+pip install -r requirements.txt
+```
 
 ## Usage
 Run the main script `parse-sos.py` to analyze a sosreport.
